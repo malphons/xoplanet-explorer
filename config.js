@@ -13,7 +13,7 @@ window.XO_CONFIG = {
 
   // Paste the project's anon / publishable key (Supabase dashboard ->
   // Project Settings -> API -> Project API keys -> anon public).
-  anonKey: "REPLACE_WITH_SUPABASE_ANON_KEY",
+  anonKey: "sb_publishable_OrTzc3xGb8kIw3mHBHf-Ng_KhpUcPe_",
 
   // Link back to the knowledge base (optional; shown in the header).
   kbLabel: "xProject Knowledge Base",
