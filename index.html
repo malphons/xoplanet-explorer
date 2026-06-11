@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xo* Explorer — Systems</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div id="app"><p class="muted" style="padding:28px">Loading…</p></div>
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+(async function () {
+  try {
+    const [stars, facts] = await Promise.all([
+      xoFetch("xo_stars?select=star_id,name,teff_k,n_known_planets,wiki_entity_page," +
+              "xo_planets(planet_id,name,regime_class,equilibrium_temp_k,radius_rearth,hz_position)" +
+              "&order=name"),
+      xoFetch("xo_facts?select=fact_id&is_active=eq.true")
+    ]);
+    const nPlanets = stars.reduce((a, s) => a + (s.xo_planets ? s.xo_planets.length : 0), 0);
+
+    const stats = `<div class="stats">
+      <div class="stat"><div class="n">${stars.length}</div><div class="l">Host stars</div></div>
+      <div class="stat"><div class="n">${nPlanets}</div><div class="l">Planets</div></div>
+      <div class="stat"><div class="n">${facts.length}</div><div class="l">Facts</div></div>
+    </div>`;
+
+    const systems = stars.map(s => {
+      const planets = (s.xo_planets || []).sort((a, b) =>
+        a.planet_id.localeCompare(b.planet_id));
+      const rows = planets.map(p => `<tr>
+        <td><a href="entity.html?type=planet&id=${encodeURIComponent(p.planet_id)}">${esc(p.name)}</a></td>
+        <td>${p.regime_class ? esc(p.regime_class) : "—"}</td>
+        <td class="num">${fmt(p.radius_rearth)}</td>
+        <td class="num">${fmt(p.equilibrium_temp_k)}</td>
+        <td>${p.hz_position ? `<span class="pill">${esc(p.hz_position)}</span>` : ""}</td>
+      </tr>`).join("");
+      return `<section class="system">
+        <h2><a href="entity.html?type=star&id=${encodeURIComponent(s.star_id)}">${esc(s.name)}</a></h2>
+        <div class="meta">T<sub>eff</sub> ${fmt(s.teff_k)} K · ${planets.length} planet(s)</div>
+        <table>
+          <thead><tr><th>Planet</th><th>Regime</th><th>R⊕</th><th>T<sub>eq</sub> (K)</th><th>HZ</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </section>`;
+    }).join("");
+
+    mount(renderHeader("index.html") +
+      `<main><h2 class="section-title">Priority systems</h2>${stats}${systems}</main>` +
+      renderFooter());
+  } catch (err) {
+    mount(renderHeader("index.html") + `<main>${configNotice(err)}</main>` + renderFooter());
+  }
+})();
+</script>
+</body>
+</html>

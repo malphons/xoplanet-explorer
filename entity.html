@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xo* Explorer — Entity</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div id="app"><p class="muted" style="padding:28px">Loading…</p></div>
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+// Order facts are displayed in (anything not listed falls to the end, alpha).
+const FACT_ORDER = [
+  "radius_rearth", "mass_mearth", "density_gcc", "orbital_period_days",
+  "semi_major_axis_au", "equilibrium_temp_k", "teff_k", "discovery_method",
+  "discovery_year", "transit_flag", "rv_flag"
+];
+const FACT_LABEL = {
+  radius_rearth: "Radius (R⊕)", mass_mearth: "Mass (M⊕)", density_gcc: "Density (g/cc)",
+  orbital_period_days: "Orbital period (days)", semi_major_axis_au: "Semi-major axis (AU)",
+  equilibrium_temp_k: "Equilibrium temp (K)", teff_k: "Effective temp (K)",
+  discovery_method: "Discovery method", discovery_year: "Discovery year",
+  transit_flag: "Transits", rv_flag: "RV detected"
+};
+
+function factValue(f) {
+  if (f.value_text !== null && f.value_text !== undefined) return esc(f.value_text);
+  if (f.value_bool !== null && f.value_bool !== undefined) return f.value_bool ? "yes" : "no";
+  const v = fmt(f.value_num);
+  return f.unit && v !== "—" ? `${v} <span class="muted">${esc(f.unit)}</span>` : v;
+}
+
+function factsTable(facts) {
+  if (!facts.length) return `<p class="muted">No facts seeded for this entity yet.</p>`;
+  facts.sort((a, b) => {
+    const ia = FACT_ORDER.indexOf(a.parameter), ib = FACT_ORDER.indexOf(b.parameter);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.parameter.localeCompare(b.parameter);
+  });
+  const rows = facts.map(f => `<tr>
+    <td>${esc(FACT_LABEL[f.parameter] || f.parameter)}</td>
+    <td>${factValue(f)}</td>
+    <td>${badge(f.confidence_class)} <span class="muted">${f.confidence_score != null ? (+f.confidence_score).toFixed(3) : ""}</span></td>
+    <td class="muted">${(f.sources || []).map(esc).join(", ")}</td>
+  </tr>`).join("");
+  return `<table><thead><tr><th>Parameter</th><th>Value</th><th>Confidence</th><th>Sources</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+async function renderPlanet(id) {
+  const [planets, facts] = await Promise.all([
+    xoFetch(`xo_planets?planet_id=eq.${encodeURIComponent(id)}&select=*`),
+    xoFetch(`xo_facts?entity_type=eq.planet&entity_id=eq.${encodeURIComponent(id)}&is_active=eq.true&select=parameter,value_num,value_text,value_bool,unit,confidence_score,confidence_class,sources`)
+  ]);
+  if (!planets.length) return notFound("planet", id);
+  const p = planets[0];
+  const hz = p.hz_position ? ` · HZ: <span class="pill">${esc(p.hz_position)}</span>` : "";
+  return `<main>
+    <a class="back" href="planets.html">← all planets</a>
+    <h1 class="entity">${esc(p.name)}</h1>
+    <div class="meta muted">Host <a href="entity.html?type=star&id=${encodeURIComponent(p.host_star_id)}">${esc(p.host_star_id)}</a>
+      ${p.regime_class ? " · " + esc(p.regime_class) : ""}${hz}</div>
+    <h2 class="section-title">Facts (from xo_facts)</h2>
+    ${factsTable(facts)}
+    ${p.wiki_entity_page ? `<p class="muted" style="margin-top:18px">Wiki page: <code>${esc(p.wiki_entity_page)}</code></p>` : ""}
+  </main>`;
+}
+
+async function renderStar(id) {
+  const [stars, facts] = await Promise.all([
+    xoFetch(`xo_stars?star_id=eq.${encodeURIComponent(id)}&select=*,xo_planets(planet_id,name)`),
+    xoFetch(`xo_facts?entity_type=eq.star&entity_id=eq.${encodeURIComponent(id)}&is_active=eq.true&select=parameter,value_num,value_text,value_bool,unit,confidence_score,confidence_class,sources`)
+  ]);
+  if (!stars.length) return notFound("star", id);
+  const s = stars[0];
+  const planets = (s.xo_planets || []).sort((a, b) => a.planet_id.localeCompare(b.planet_id));
+  const plist = planets.map(p =>
+    `<a href="entity.html?type=planet&id=${encodeURIComponent(p.planet_id)}">${esc(p.name)}</a>`).join(" · ");
+  return `<main>
+    <a class="back" href="index.html">← all systems</a>
+    <h1 class="entity">${esc(s.name)}</h1>
+    <div class="meta muted">Host star · ${planets.length} known planet(s)</div>
+    <h2 class="section-title">Facts (from xo_facts)</h2>
+    ${factsTable(facts)}
+    <h2 class="section-title">Planets</h2>
+    <p>${plist || '<span class="muted">none</span>'}</p>
+    ${s.wiki_entity_page ? `<p class="muted" style="margin-top:18px">Wiki page: <code>${esc(s.wiki_entity_page)}</code></p>` : ""}
+  </main>`;
+}
+
+function notFound(type, id) {
+  return `<main><div class="notice"><strong>Not found.</strong> No ${type} with id
+    <code>${esc(id)}</code>. It may not be seeded yet.</div></main>`;
+}
+
+(async function () {
+  const type = qs("type"), id = qs("id");
+  try {
+    if (!type || !id) throw new Error("Missing ?type= and ?id= in the URL.");
+    const body = type === "star" ? await renderStar(id) : await renderPlanet(id);
+    mount(renderHeader("") + body + renderFooter());
+  } catch (err) {
+    mount(renderHeader("") + `<main>${configNotice(err)}</main>` + renderFooter());
+  }
+})();
+</script>
+</body>
+</html>

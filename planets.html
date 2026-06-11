@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xo* Explorer — Planets</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div id="app"><p class="muted" style="padding:28px">Loading…</p></div>
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+const COLS = [
+  { k: "name", l: "Planet", t: "s" },
+  { k: "host_star_id", l: "Host", t: "s" },
+  { k: "regime_class", l: "Regime", t: "s" },
+  { k: "radius_rearth", l: "R⊕", t: "n" },
+  { k: "mass_mearth", l: "M⊕", t: "n" },
+  { k: "density_gcc", l: "ρ (g/cc)", t: "n" },
+  { k: "orbital_period_days", l: "Period (d)", t: "n" },
+  { k: "equilibrium_temp_k", l: "T_eq (K)", t: "n" },
+  { k: "discovery_year", l: "Year", t: "n" }
+];
+let DATA = [], sortKey = "planet_id", sortDir = 1;
+
+function render() {
+  DATA.sort((a, b) => {
+    const x = a[sortKey], y = b[sortKey];
+    if (x === null || x === undefined) return 1;
+    if (y === null || y === undefined) return -1;
+    return (x > y ? 1 : x < y ? -1 : 0) * sortDir;
+  });
+  const head = COLS.map(c =>
+    `<th data-k="${c.k}">${c.l}${sortKey === c.k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("");
+  const rows = DATA.map(p => `<tr>
+    <td><a href="entity.html?type=planet&id=${encodeURIComponent(p.planet_id)}">${esc(p.name)}</a></td>
+    <td><a href="entity.html?type=star&id=${encodeURIComponent(p.host_star_id)}">${esc(p.host_star_id)}</a></td>
+    <td>${p.regime_class ? esc(p.regime_class) : "—"}</td>
+    <td class="num">${fmt(p.radius_rearth)}</td>
+    <td class="num">${fmt(p.mass_mearth)}</td>
+    <td class="num">${fmt(p.density_gcc)}</td>
+    <td class="num">${fmt(p.orbital_period_days)}</td>
+    <td class="num">${fmt(p.equilibrium_temp_k)}</td>
+    <td class="num">${fmt(p.discovery_year)}</td>
+  </tr>`).join("");
+  mount(renderHeader("planets.html") +
+    `<main><h2 class="section-title">All seeded planets (${DATA.length})</h2>
+      <table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></main>` +
+    renderFooter());
+  document.querySelectorAll("th[data-k]").forEach(th =>
+    th.addEventListener("click", () => {
+      const k = th.dataset.k;
+      if (k === sortKey) sortDir *= -1; else { sortKey = k; sortDir = 1; }
+      render();
+    }));
+}
+
+(async function () {
+  try {
+    DATA = await xoFetch("xo_planets?select=planet_id,name,host_star_id,regime_class," +
+      "radius_rearth,mass_mearth,density_gcc,orbital_period_days,equilibrium_temp_k," +
+      "discovery_year&order=planet_id");
+    render();
+  } catch (err) {
+    mount(renderHeader("planets.html") + `<main>${configNotice(err)}</main>` + renderFooter());
+  }
+})();
+</script>
+</body>
+</html>
