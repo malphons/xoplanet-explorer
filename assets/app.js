@@ -46,6 +46,16 @@ function qs(name) {
   return new URLSearchParams(location.search).get(name);
 }
 
+// Render an entity's wiki_entity_page as a link (if wikiBaseUrl is set in
+// config.js) or plain code text otherwise.
+function wikiLink(path) {
+  if (!path) return "";
+  const base = CFG.wikiBaseUrl;
+  if (!base) return `<code>${esc(path)}</code>`;
+  const url = base.replace(/\/?$/, "/") + String(path).replace(/^\//, "");
+  return `<a href="${esc(url)}" target="_blank" rel="noopener"><code>${esc(path)}</code></a>`;
+}
+
 // ---- chrome ---------------------------------------------------------------
 function renderHeader(active) {
   const kb = CFG.kbUrl

@@ -22,18 +22,27 @@ const COLS = [
   { k: "equilibrium_temp_k", l: "T_eq (K)", t: "n" },
   { k: "discovery_year", l: "Year", t: "n" }
 ];
-let DATA = [], sortKey = "planet_id", sortDir = 1;
+let DATA = [], sortKey = "planet_id", sortDir = 1, filter = "";
 
-function render() {
-  DATA.sort((a, b) => {
+// Filter (by planet/host/regime) + sort, without mutating DATA.
+function visibleRows() {
+  const q = filter.trim().toLowerCase();
+  const rows = q
+    ? DATA.filter(p => [p.name, p.host_star_id, p.regime_class]
+        .some(v => (v || "").toLowerCase().includes(q)))
+    : DATA.slice();
+  return rows.sort((a, b) => {
     const x = a[sortKey], y = b[sortKey];
     if (x === null || x === undefined) return 1;
     if (y === null || y === undefined) return -1;
     return (x > y ? 1 : x < y ? -1 : 0) * sortDir;
   });
-  const head = COLS.map(c =>
-    `<th data-k="${c.k}">${c.l}${sortKey === c.k ? (sortDir > 0 ? " ▲" : " ▼") : ""}</th>`).join("");
-  const rows = DATA.map(p => `<tr>
+}
+
+// Re-render ONLY the tbody + count + sort arrows, so the search input keeps focus.
+function renderRows() {
+  const rows = visibleRows();
+  document.getElementById("rows").innerHTML = rows.map(p => `<tr>
     <td><a href="entity.html?type=planet&id=${encodeURIComponent(p.planet_id)}">${esc(p.name)}</a></td>
     <td><a href="entity.html?type=star&id=${encodeURIComponent(p.host_star_id)}">${esc(p.host_star_id)}</a></td>
     <td>${p.regime_class ? esc(p.regime_class) : "—"}</td>
@@ -43,17 +52,32 @@ function render() {
     <td class="num">${fmt(p.orbital_period_days)}</td>
     <td class="num">${fmt(p.equilibrium_temp_k)}</td>
     <td class="num">${fmt(p.discovery_year)}</td>
-  </tr>`).join("");
+  </tr>`).join("") || `<tr><td colspan="${COLS.length}" class="muted">No planets match “${esc(filter)}”.</td></tr>`;
+  document.getElementById("count").textContent = rows.length;
+  document.querySelectorAll("th[data-k]").forEach(th => {
+    th.textContent = th.dataset.label + (sortKey === th.dataset.k ? (sortDir > 0 ? " ▲" : " ▼") : "");
+  });
+}
+
+function renderPage() {
+  const head = COLS.map(c => `<th data-k="${c.k}" data-label="${c.l}">${c.l}</th>`).join("");
   mount(renderHeader("planets.html") +
-    `<main><h2 class="section-title">All seeded planets (${DATA.length})</h2>
-      <table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></main>` +
-    renderFooter());
+    `<main>
+      <h2 class="section-title">Planets <span class="muted">(<span id="count">0</span> shown)</span></h2>
+      <input id="search" class="search" type="search" autocomplete="off"
+             placeholder="Filter by planet, host star, or regime…">
+      <table><thead><tr>${head}</tr></thead><tbody id="rows"></tbody></table>
+    </main>` + renderFooter());
+  const inp = document.getElementById("search");
+  inp.value = filter;
+  inp.addEventListener("input", e => { filter = e.target.value; renderRows(); });
   document.querySelectorAll("th[data-k]").forEach(th =>
     th.addEventListener("click", () => {
       const k = th.dataset.k;
       if (k === sortKey) sortDir *= -1; else { sortKey = k; sortDir = 1; }
-      render();
+      renderRows();
     }));
+  renderRows();
 }
 
 (async function () {
@@ -61,7 +85,7 @@ function render() {
     DATA = await xoFetch("xo_planets?select=planet_id,name,host_star_id,regime_class," +
       "radius_rearth,mass_mearth,density_gcc,orbital_period_days,equilibrium_temp_k," +
       "discovery_year&order=planet_id");
-    render();
+    renderPage();
   } catch (err) {
     mount(renderHeader("planets.html") + `<main>${configNotice(err)}</main>` + renderFooter());
   }

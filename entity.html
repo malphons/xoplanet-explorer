@@ -63,7 +63,7 @@ async function renderPlanet(id) {
       ${p.regime_class ? " · " + esc(p.regime_class) : ""}${hz}</div>
     <h2 class="section-title">Facts (from xo_facts)</h2>
     ${factsTable(facts)}
-    ${p.wiki_entity_page ? `<p class="muted" style="margin-top:18px">Wiki page: <code>${esc(p.wiki_entity_page)}</code></p>` : ""}
+    ${p.wiki_entity_page ? `<p class="muted" style="margin-top:18px">Wiki page: ${wikiLink(p.wiki_entity_page)}</p>` : ""}
   </main>`;
 }
 
@@ -85,7 +85,7 @@ async function renderStar(id) {
     ${factsTable(facts)}
     <h2 class="section-title">Planets</h2>
     <p>${plist || '<span class="muted">none</span>'}</p>
-    ${s.wiki_entity_page ? `<p class="muted" style="margin-top:18px">Wiki page: <code>${esc(s.wiki_entity_page)}</code></p>` : ""}
+    ${s.wiki_entity_page ? `<p class="muted" style="margin-top:18px">Wiki page: ${wikiLink(s.wiki_entity_page)}</p>` : ""}
   </main>`;
 }
 

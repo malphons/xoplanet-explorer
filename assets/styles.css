@@ -84,6 +84,21 @@ td.num { font-variant-numeric: tabular-nums; }
 
 .pill { color: var(--muted); font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; }
 
+.search {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 0 16px;
+  padding: 9px 12px;
+  font: inherit;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+}
+.search:focus { border-color: var(--accent); }
+.search::placeholder { color: var(--muted); }
+
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 @media (max-width: 740px) { .detail-grid { grid-template-columns: 1fr; } }
 
