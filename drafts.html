@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xo* Explorer — Working drafts</title>
+<link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+<div id="app"><p class="muted" style="padding:28px">Loading…</p></div>
+<script src="config.js"></script>
+<script src="assets/app.js"></script>
+<script>
+// Personal launcher into the private KB repo (PhD_Exoplanets). Static — no
+// Supabase needed. Links are self-securing: they open for you (and repo
+// collaborators) when logged in to GitHub, and 404 for everyone else.
+
+// kind: "blob" = file · "tree" = folder · "" = repo root
+const WORKING_DRAFTS = [
+  { path: "exoplanets/raw/projects/xp_thesis-working-drafts/th-001-thesis-proposal.pdf",        kind: "blob", label: "TH-001 — Thesis proposal (PhD; the canonical spine)" },
+  { path: "exoplanets/raw/projects/xp_thesis-working-drafts/th-003-updated-axioms.pdf",         kind: "blob", label: "TH-003 — Inference under constraint: the 9 axioms" },
+  { path: "exoplanets/raw/projects/xp_thesis-working-drafts/th-004-thesis-description.pdf",     kind: "blob", label: "TH-004 — Thesis description (4-page exec summary)" },
+  { path: "exoplanets/raw/projects/xp_thesis-working-drafts/th-005-mphil-thesis-framework.pdf", kind: "blob", label: "TH-005 — M.Phil framework (feeder / scoping layer)" },
+  { path: "exoplanets/raw/projects/xp_thesis-working-drafts/th-005-mphil-thesis-framework.tex", kind: "blob", label: "TH-005 — LaTeX source" },
+  { path: "exoplanets/raw/projects/xp_thesis-working-drafts/th-002-reading-list.pdf",           kind: "blob", label: "TH-002 — Reading list (67-ref bibliography)" },
+  { path: "exoplanets/raw/projects/xp_thesis-working-drafts/",                                  kind: "tree", label: "↳ Working-drafts folder (all source files)" }
+];
+
+const NOTEBOOK = [
+  { path: "exoplanets/wiki/index.md",                                                           kind: "blob", label: "Wiki index — catalog of everything in the KB" },
+  { path: "exoplanets/wiki/questions/thesis-evaluation-and-upgrade-path.md",                    kind: "blob", label: "Thesis evaluation + upgrade path (critique & schedule)" },
+  { path: "exoplanets/wiki/concepts/composition-of-identifiability-conjecture.md",              kind: "blob", label: "Composition theorem — practical / Fisher-information reformulation" },
+  { path: "exoplanets/wiki/log.md",                                                             kind: "blob", label: "Log — append-only journal of ingests / queries" }
+];
+
+const REPO = [
+  { path: "",            kind: "",     label: "Repo root — PhD_Exoplanets (private)" },
+  { path: "exoplanets",  kind: "tree", label: "Exoplanets bucket" }
+];
+
+// Publication pipeline (from the P0–P5 schedule). Text-only for now — links
+// activate once a manuscripts/ authoring layer exists in the KB repo.
+const PIPELINE = [
+  { id: "P0", title: "Manifesto: identifiability + detection theory for biosignatures", venue: "PNAS / Nat. Astron. (arXiv first)", status: "planned" },
+  { id: "P1", title: "Detection-theoretic reanalysis of the K2-18b DMS claim",          venue: "ApJL / AJ",                        status: "planned" },
+  { id: "P2", title: "Identifiability of JWST atmospheric retrieval",                   venue: "ApJ / MNRAS",                      status: "planned" },
+  { id: "T1", title: "Open-source identifiability classifier (tool)",                   venue: "JOSS + companion AJ",              status: "planned" },
+  { id: "P3", title: "Disequilibrium as an invariant of the observation chain",         venue: "Nat. Astron. / ApJ",               status: "planned" },
+  { id: "P4", title: "Practical-identifiability composition law + detection framework", venue: "ApJ + mission-design venue",       status: "planned" },
+  { id: "P5", title: "Detection-confidence standard for remote biosignatures (review)", venue: "ARA&A-style review",               status: "planned" }
+];
+
+function linkItem(it) {
+  const url = repoUrl(it.path, it.kind);
+  const shown = it.path || "(repo root)";
+  const head = url
+    ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(it.label)}</a>`
+    : `${esc(it.label)} <span class="lock">(set repoBaseUrl in config.js to link)</span>`;
+  return `<li>${head}<span class="path">${esc(shown)}</span></li>`;
+}
+
+function card(title, items) {
+  return `<section class="system">
+    <h2>${esc(title)}</h2>
+    <ul class="links">${items.map(linkItem).join("")}</ul>
+  </section>`;
+}
+
+function pipelineCard() {
+  const rows = PIPELINE.map(p => `<tr>
+    <td><strong>${esc(p.id)}</strong></td>
+    <td>${esc(p.title)}</td>
+    <td class="muted">${esc(p.venue)}</td>
+    <td><span class="pill">${esc(p.status)}</span></td>
+  </tr>`).join("");
+  return `<section class="system">
+    <h2>Publication pipeline</h2>
+    <div class="meta">From the P0–P5 schedule. Links activate once a <code>manuscripts/</code> authoring layer exists.</div>
+    <table>
+      <thead><tr><th>#</th><th>Paper</th><th>Target venue</th><th>Status</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </section>`;
+}
+
+mount(renderHeader("drafts.html") +
+  `<main>
+    <h2 class="section-title">Working drafts &amp; launcher</h2>
+    <div class="notice">
+      <strong>Private launcher.</strong> These links point into the private
+      <code>PhD_Exoplanets</code> repo. They open for you (and collaborators)
+      when signed in to GitHub, and return <strong>404</strong> for everyone
+      else — GitHub enforces access, this page only holds the URLs.
+    </div>
+    ${card("Working draft papers", WORKING_DRAFTS)}
+    ${card("Research notebook (wiki)", NOTEBOOK)}
+    ${card("Repository", REPO)}
+    ${pipelineCard()}
+  </main>` +
+  renderFooter());
+</script>
+</body>
+</html>

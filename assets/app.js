@@ -56,6 +56,18 @@ function wikiLink(path) {
   return `<a href="${esc(url)}" target="_blank" rel="noopener"><code>${esc(path)}</code></a>`;
 }
 
+// Build a GitHub URL into the private KB repo (used by drafts.html). `kind` is
+// "blob" for files or "tree" for folders; pass "" path for the repo root.
+// Returns "" if repoBaseUrl is not configured.
+function repoUrl(path, kind) {
+  const base = CFG.repoBaseUrl;
+  if (!base) return "";
+  const root = base.replace(/\/?$/, "");
+  const rel = String(path || "").replace(/^\//, "");
+  if (!rel) return root;
+  return `${root}/${kind || "blob"}/${CFG.repoBranch || "main"}/${rel}`;
+}
+
 // ---- chrome ---------------------------------------------------------------
 function renderHeader(active) {
   const kb = CFG.kbUrl
@@ -66,7 +78,7 @@ function renderHeader(active) {
   return `<header class="site">
     <h1><a href="index.html" style="color:inherit">xo&#42; Explorer</a></h1>
     <span class="sub">live confidence-scored exoplanet facts${kb}</span>
-    <nav>${link("index.html", "Systems")} ${link("planets.html", "Planets")}</nav>
+    <nav>${link("index.html", "Systems")} ${link("planets.html", "Planets")} ${link("drafts.html", "Working drafts")}</nav>
   </header>`;
 }
 

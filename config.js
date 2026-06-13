@@ -26,5 +26,13 @@ window.XO_CONFIG = {
   // ".../exoplanets/" suffix. Set to "" to render the path as plain text.
   // NOTE: if PhD_Exoplanets stays private, these links 404 for visitors
   // without repo access (they work for you when logged in to GitHub).
-  wikiBaseUrl: "https://github.com/malphons/PhD_Exoplanets/blob/main/exoplanets/"
+  wikiBaseUrl: "https://github.com/malphons/PhD_Exoplanets/blob/main/exoplanets/",
+
+  // Private KB repo, used by the Working Drafts launcher (drafts.html) to build
+  // links into the repo. Same self-securing model as wikiBaseUrl: links work
+  // for you (and collaborators) when logged in to GitHub, and return 404 for
+  // everyone else. The repo NAME and paths are visible to the public; the repo
+  // CONTENTS are not. Never link to anything you'd mind being named publicly.
+  repoBaseUrl: "https://github.com/malphons/PhD_Exoplanets",
+  repoBranch: "main"
 };

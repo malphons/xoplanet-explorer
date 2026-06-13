@@ -13,6 +13,10 @@ and the `db/seeds/` seeds live there).
 - `index.html` — the priority systems, each star with its planets.
 - `planets.html` — sortable table of every seeded planet.
 - `entity.html?type=planet&id=k2-18b` — per-entity facts with confidence badges.
+- `drafts.html` — personal launcher into the private `PhD_Exoplanets` repo
+  (working drafts, wiki notebook, publication pipeline). Static, no Supabase.
+  Links are self-securing: they open for repo collaborators signed in to GitHub
+  and 404 for everyone else. Repo base URL is `repoBaseUrl` in `config.js`.
 - `assets/app.js` — plain `fetch` against the Supabase PostgREST API.
 - `config.js` — project URL + anon key (see below).
 
